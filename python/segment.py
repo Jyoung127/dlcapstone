@@ -7,8 +7,9 @@ import tensorflow as tf
 import random
 import cv2
 from collections import deque
+from functools import partial
 
-BATCH_SIZE = 1
+BATCH_SIZE = 20
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
@@ -200,7 +201,7 @@ def main(voc_devkit_path, index_file):
  		name_batch = sorted_img_names[r : r + BATCH_SIZE]
 
 		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
-		label_batch = clm.rgb_image_to_label(label_batch, color_to_label)
+		label_batch = clm.rgb_image_to_label(np.array(label_batch * 255.0, dtype='uint8'), color_to_label)
 		width, height, channels = input_batch[0].shape
 
 		print(np.shape(input_batch))
@@ -211,36 +212,27 @@ def main(voc_devkit_path, index_file):
  	# Testing testing
 
 
+def pad_img(H, W, border_type, img):
+	h = img.shape[0]
+	w = img.shape[1]
+
+	top = (H - h) / 2
+	bottom = H - h - top
+	left = (W - w) / 2
+	right = W - w - left	
+
+	return cv2.copyMakeBorder(img, top, bottom, left, right, border_type, value=MANUAL_VOID_RGB)
+
+
 def pad_batch(name_batch, input_images_dir, label_images_dir):
- 	biggest_input = cv2.imread('{0}/{1}.jpg'.format(input_images_dir, name_batch[-1]))
-	biggest_label = cv2.imread('{0}/{1}.png'.format(label_images_dir, name_batch[-1]))
+	input_batch_raw = map(lambda img_name: cv2.imread('{0}/{1}.jpg'.format(input_images_dir, img_name)), name_batch)
+	label_batch_raw = map(lambda img_name: cv2.imread('{0}/{1}.png'.format(label_images_dir, img_name)), name_batch)
+	
+	H = max([img.shape[0] for img in input_batch_raw])
+	W = max([img.shape[1] for img in input_batch_raw])
 
-	# Assumes index file sorts images ascending s.t. img1 > img2 iff w1 >= w2 and h1 >= h2
-	H = biggest_input.shape[0]
-	W = biggest_input.shape[1]
-
-	padded_inputs = deque([biggest_input])
-	padded_labels = deque([biggest_label])
-	for image_name in name_batch[:-1]:
-		input_img_raw = cv2.imread('{0}/{1}.jpg'.format(input_images_dir, image_name))
-		label_img_raw = cv2.imread('{0}/{1}.png'.format(label_images_dir, image_name))
-
-		h = input_img_raw.shape[0]
-		w = input_img_raw.shape[1]
-
-		top = (H - h) / 2
-		bottom = H - h - top
-		left = (W - w) / 2
-		right = W - w - left
-
-		input_img_padded = cv2.copyMakeBorder(input_img_raw, top, bottom, left, right, cv2.BORDER_REPLICATE)
-		label_img_padded = cv2.copyMakeBorder(label_img_raw, top, bottom, left, right, cv2.BORDER_CONSTANT, value=MANUAL_VOID_RGB)
-
-		padded_inputs.appendleft(input_img_padded)
-		padded_labels.appendleft(label_img_padded)
-
-		print(input_img_padded.shape)
-		print(label_img_padded.shape)
+	padded_inputs = map(partial(pad_img, H, W, cv2.BORDER_REPLICATE), input_batch_raw)
+	padded_labels = map(partial(pad_img, H, W, cv2.BORDER_CONSTANT), label_batch_raw)
 
 	return np.array(map(lambda img: np.asarray(img), padded_inputs)), \
 		np.array(map(lambda img: np.asarray(img, dtype='float32') / 255.0, padded_labels))

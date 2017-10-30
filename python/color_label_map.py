@@ -1,6 +1,9 @@
 import numpy as np
 from PIL import Image
 
+MANUAL_VOID_RGB = (1, 1, 1)
+MANUAL_VOID_LABEL = 254
+
 # Creates the color label map used in the PASCAL VOC 2012 image segmentation labels.
 # Class 0: Background
 # Class 1-20: 
@@ -22,6 +25,8 @@ def create_color_label_map():
 		label_to_color[i] = [r, g, b]
 		color_to_label[(r, g, b)] = i
 
+	label_to_color[MANUAL_VOID_LABEL] = MANUAL_VOID_RGB
+	label_to_color[MANUAL_VOID_RGB] = MANUAL_VOID_LABEL
 	return label_to_color, color_to_label
 
 def label_image_to_rgb(image, label_to_color_map):

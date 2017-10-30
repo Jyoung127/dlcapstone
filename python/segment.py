@@ -1,15 +1,25 @@
+import os
 import argparse
 import color_label_map as clm
 import matplotlib.image as mpimg
 import numpy as np
 import tensorflow as tf
-from PIL import Image
+import random
+import cv2
+from collections import deque
 
 BATCH_SIZE = 1
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
-def main():
+MANUAL_VOID_RGB = [0, 0, 0]
+
+ALL_IMAGES_FILE_REL = 'VOC2012/ImageSets/Segmentation/trainval.txt'
+INPUT_IMAGES_DIR_REL = 'VOC2012/JPEGImages'
+LABEL_IMAGES_DIR_REL = 'VOC2012/SegmentationClass'
+
+
+def main(voc_devkit_path, index_file):
 	image_width = tf.placeholder(tf.int32)
 	image_height = tf.placeholder(tf.int32)
 	images = tf.placeholder(tf.float32, [BATCH_SIZE, None, None, NUM_CHANNELS])
@@ -165,21 +175,81 @@ def main():
 
 	label_to_color, color_to_label = clm.create_color_label_map()
 
-	img = Image.open('../VOCdevkit/VOC2012/JPEGImages/2007_000032.jpg')
-	ans = mpimg.imread('../VOCdevkit/VOC2012/SegmentationClass/2007_000032.png')
+	# img = Image.open('../VOCdevkit/VOC2012/JPEGImages/2007_000032.jpg')
+	# ans = mpimg.imread('../VOCdevkit/VOC2012/SegmentationClass/2007_000032.png')
 
-	img = np.asarray(img, dtype='float32') / 255.0
-	ans = clm.rgb_image_to_label(np.array(ans * 255.0, dtype='uint8'), color_to_label)
+	# img = np.asarray(img, dtype='float32') / 255.0
+	# ans = clm.rgb_image_to_label(np.array(ans * 255.0, dtype='uint8'), color_to_label)
 
-	width, height = ans.shape
-	print width, height
+	# width, height = ans.shape
+	# print width, height
 
-	# Testing testing
+	# Training training	
+	all_images_file = '{0}/{1}'.format(voc_devkit_path, ALL_IMAGES_FILE_REL)
+	input_images_dir = '{0}/{1}'.format(voc_devkit_path, INPUT_IMAGES_DIR_REL)
+	label_images_dir = '{0}/{1}'.format(voc_devkit_path, LABEL_IMAGES_DIR_REL)
+
+	sorted_img_names = []
+	with open(index_file, 'rb') as f:
+		sorted_img_names = [line[:-1] for line in f]
+	num_imgs = len(sorted_img_names)
+
 	for i in range(20):
  		print i
- 		_, l = sess.run([train, loss], feed_dict={images: [img], ground_truth: [ans], image_width: width, image_height: height, keep_prob: 0.5})
+ 		r = random.randint(0, num_imgs - BATCH_SIZE)
+ 		name_batch = sorted_img_names[r : r + BATCH_SIZE]
+
+		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
+		label_batch = clm.rgb_image_to_label(label_batch, color_to_label)
+		width, height, channels = input_batch[0].shape
+
+		print(np.shape(input_batch))
+
+ 		_, l = sess.run([train, loss], feed_dict={images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5})
  		print l
+
+ 	# Testing testing
+
+
+def pad_batch(name_batch, input_images_dir, label_images_dir):
+ 	biggest_input = cv2.imread('{0}/{1}.jpg'.format(input_images_dir, name_batch[-1]))
+	biggest_label = cv2.imread('{0}/{1}.png'.format(label_images_dir, name_batch[-1]))
+
+	# Assumes index file sorts images ascending s.t. img1 > img2 iff w1 >= w2 and h1 >= h2
+	H = biggest_input.shape[0]
+	W = biggest_input.shape[1]
+
+	padded_inputs = deque([biggest_input])
+	padded_labels = deque([biggest_label])
+	for image_name in name_batch[:-1]:
+		input_img_raw = cv2.imread('{0}/{1}.jpg'.format(input_images_dir, image_name))
+		label_img_raw = cv2.imread('{0}/{1}.png'.format(label_images_dir, image_name))
+
+		h = input_img_raw.shape[0]
+		w = input_img_raw.shape[1]
+
+		top = (H - h) / 2
+		bottom = H - h - top
+		left = (W - w) / 2
+		right = W - w - left
+
+		input_img_padded = cv2.copyMakeBorder(input_img_raw, top, bottom, left, right, cv2.BORDER_REPLICATE)
+		label_img_padded = cv2.copyMakeBorder(label_img_raw, top, bottom, left, right, cv2.BORDER_CONSTANT, value=MANUAL_VOID_RGB)
+
+		padded_inputs.appendleft(input_img_padded)
+		padded_labels.appendleft(label_img_padded)
+
+	l1, l2 = np.array(map(lambda img: np.asarray(img), padded_inputs)), \
+		np.array(map(lambda img: np.asarray(img, dtype='float32') / 255.0, padded_labels))
+	print(l1)
+	print
+	print(l2)
+	return l1, l2
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	main()
+	parser.add_argument('voc_devkit_path', help='Path to VOCdevkit directory')
+	parser.add_argument('index_file', help='Path to images index file (likely data/images_index.txt)')
+	args = parser.parse_args()
+	main(args.voc_devkit_path, args.index_file)

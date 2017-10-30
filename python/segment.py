@@ -239,12 +239,11 @@ def pad_batch(name_batch, input_images_dir, label_images_dir):
 		padded_inputs.appendleft(input_img_padded)
 		padded_labels.appendleft(label_img_padded)
 
-	l1, l2 = np.array(map(lambda img: np.asarray(img), padded_inputs)), \
+		print(input_img_padded.shape)
+		print(label_img_padded.shape)
+
+	return np.array(map(lambda img: np.asarray(img), padded_inputs)), \
 		np.array(map(lambda img: np.asarray(img, dtype='float32') / 255.0, padded_labels))
-	print(l1)
-	print
-	print(l2)
-	return l1, l2
 
 
 if __name__ == '__main__':

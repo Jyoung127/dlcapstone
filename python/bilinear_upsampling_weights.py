@@ -13,7 +13,7 @@ def bilinear_filter(size):
 	return np.outer(1 - abs(points - center) / width, 1 - abs(points - center) / width)
 
 def create_initial_bilinear_weights(size):
-	W = np.zeros([size, size, 21, 21])
+	W = np.zeros([size, size, 21, 21], dtype=np.float32)
 	bilinear_filt = bilinear_filter(size)
 
 	for i in range(21):

@@ -1,5 +1,6 @@
 import os
 import argparse
+import bilinear_upsampling_weights as bilinear
 import color_label_map as clm
 import matplotlib.image as mpimg
 import numpy as np
@@ -9,7 +10,7 @@ import cv2
 from collections import deque
 from functools import partial
 
-BATCH_SIZE = 20
+BATCH_SIZE = 10
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
@@ -144,18 +145,16 @@ def main(voc_devkit_path, index_file):
 	drop7 = tf.nn.dropout(relu7, keep_prob)
 
 	# Calculate 32x downsampled predictions
-	output_W = tf.Variable(tf.truncated_normal([1, 1, FULLY_CONV_DEPTH, 21], stddev=0.1))
-	output_b = tf.Variable(tf.truncated_normal([21], stddev=0.1))
+	downsampled_32x_W = tf.Variable(tf.truncated_normal([1, 1, FULLY_CONV_DEPTH, 21], stddev=0.1))
+	downsampled_32x_b = tf.Variable(tf.truncated_normal([21], stddev=0.1))
 
-	output = tf.nn.conv2d(drop7, output_W, [1, 1, 1, 1], "SAME") + output_b
-
+	downsampled_32x = tf.nn.conv2d(drop7, downsampled_32x_W, [1, 1, 1, 1], "SAME") + downsampled_32x_b
 
 	# Upsample 32x
-	upsampling_W = tf.Variable(tf.truncated_normal([64, 64, 21, 21], stddev=0.1))
+	upsampling_W = tf.Variable(bilinear.create_initial_bilinear_weights(64))
 	upsampling_b = tf.Variable(tf.truncated_normal([21], stddev=0.1))
 
-	upsampled_output = tf.nn.conv2d_transpose(output, upsampling_W, [BATCH_SIZE, image_height, image_width, 21], [1, 32, 32, 1]) + upsampling_b
-
+	upsampled_output = tf.nn.conv2d_transpose(downsampled_32x, upsampling_W, [BATCH_SIZE, image_height, image_width, 21], [1, 32, 32, 1]) + upsampling_b
 
 	# Loss and mean_iou calculation
 	void_pixel_mask = tf.cast(tf.not_equal(ground_truth, 255), tf.int32)
@@ -167,23 +166,11 @@ def main(voc_devkit_path, index_file):
 	predictions = tf.argmax(upsampled_output, axis=3)
 	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=void_pixel_mask)
 
-
-
-
 	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
 
 	label_to_color, color_to_label = clm.create_color_label_map()
-
-	# img = Image.open('../VOCdevkit/VOC2012/JPEGImages/2007_000032.jpg')
-	# ans = mpimg.imread('../VOCdevkit/VOC2012/SegmentationClass/2007_000032.png')
-
-	# img = np.asarray(img, dtype='float32') / 255.0
-	# ans = clm.rgb_image_to_label(np.array(ans * 255.0, dtype='uint8'), color_to_label)
-
-	# width, height = ans.shape
-	# print width, height
 
 	# Training training	
 	all_images_file = '{0}/{1}'.format(voc_devkit_path, ALL_IMAGES_FILE_REL)
@@ -202,7 +189,7 @@ def main(voc_devkit_path, index_file):
 
 		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
 		label_batch = clm.rgb_image_to_label(np.array(label_batch * 255.0, dtype='uint8'), color_to_label)
-		width, height, channels = input_batch[0].shape
+		height, width, channels = input_batch[0].shape
 
 		print(np.shape(input_batch))
 

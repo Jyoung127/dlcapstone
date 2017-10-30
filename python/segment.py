@@ -8,12 +8,13 @@ import random
 import cv2
 from collections import deque
 from functools import partial
+from PIL import Image
 
-BATCH_SIZE = 20
+BATCH_SIZE = 5
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
-MANUAL_VOID_RGB = [0, 0, 0]
+MANUAL_VOID_RGB = [128, 128, 192]
 
 ALL_IMAGES_FILE_REL = 'VOC2012/ImageSets/Segmentation/trainval.txt'
 INPUT_IMAGES_DIR_REL = 'VOC2012/JPEGImages'
@@ -176,14 +177,6 @@ def main(voc_devkit_path, index_file):
 
 	label_to_color, color_to_label = clm.create_color_label_map()
 
-	# img = Image.open('../VOCdevkit/VOC2012/JPEGImages/2007_000032.jpg')
-	# ans = mpimg.imread('../VOCdevkit/VOC2012/SegmentationClass/2007_000032.png')
-
-	# img = np.asarray(img, dtype='float32') / 255.0
-	# ans = clm.rgb_image_to_label(np.array(ans * 255.0, dtype='uint8'), color_to_label)
-
-	# width, height = ans.shape
-	# print width, height
 
 	# Training training	
 	all_images_file = '{0}/{1}'.format(voc_devkit_path, ALL_IMAGES_FILE_REL)
@@ -199,12 +192,10 @@ def main(voc_devkit_path, index_file):
  		print i
  		r = random.randint(0, num_imgs - BATCH_SIZE)
  		name_batch = sorted_img_names[r : r + BATCH_SIZE]
-
 		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
-		label_batch = clm.rgb_image_to_label(np.array(label_batch * 255.0, dtype='uint8'), color_to_label)
-		width, height, channels = input_batch[0].shape
 
-		print(np.shape(input_batch))
+		label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
+		width, height, channels = input_batch[0].shape
 
  		_, l = sess.run([train, loss], feed_dict={images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5})
  		print l
@@ -219,14 +210,18 @@ def pad_img(H, W, border_type, img):
 	top = (H - h) / 2
 	bottom = H - h - top
 	left = (W - w) / 2
-	right = W - w - left	
+	right = W - w - left
 
 	return cv2.copyMakeBorder(img, top, bottom, left, right, border_type, value=MANUAL_VOID_RGB)
 
 
+def read_img_rgb(img_path):
+	return cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+
+
 def pad_batch(name_batch, input_images_dir, label_images_dir):
-	input_batch_raw = map(lambda img_name: cv2.imread('{0}/{1}.jpg'.format(input_images_dir, img_name)), name_batch)
-	label_batch_raw = map(lambda img_name: cv2.imread('{0}/{1}.png'.format(label_images_dir, img_name)), name_batch)
+	input_batch_raw = map(lambda img_name: read_img_rgb('{0}/{1}.jpg'.format(input_images_dir, img_name)), name_batch)
+	label_batch_raw = map(lambda img_name: read_img_rgb('{0}/{1}.png'.format(label_images_dir, img_name)), name_batch)
 	
 	H = max([img.shape[0] for img in input_batch_raw])
 	W = max([img.shape[1] for img in input_batch_raw])
@@ -234,8 +229,7 @@ def pad_batch(name_batch, input_images_dir, label_images_dir):
 	padded_inputs = map(partial(pad_img, H, W, cv2.BORDER_REPLICATE), input_batch_raw)
 	padded_labels = map(partial(pad_img, H, W, cv2.BORDER_CONSTANT), label_batch_raw)
 
-	return np.array(map(lambda img: np.asarray(img), padded_inputs)), \
-		np.array(map(lambda img: np.asarray(img, dtype='float32') / 255.0, padded_labels))
+	return padded_inputs, padded_labels
 
 
 if __name__ == '__main__':

@@ -1,16 +1,22 @@
 import numpy as np
 
-# Probably not yet working - use at your own risk
-def create_upsampling_weights(size):
-	if size % 2 == 1:
-		center = size - 1
+def bilinear_filter(size):
+	if size % 2 == 0:
+		center = size / 2.0 - 0.5
+		width = size / 2.0
 	else:
-		center = size - 0.5
+		center = size / 2.0 - 0.5
+		width = size / 2.0 + 0.5
 
-	row = np.arange(2 * size, dtype='float32')
-	col = np.transpose(row)
+	points = np.arange(size, dtype='float32')
 
-	return np.outer(1 - abs(col - center) / size, 1 - abs(row - center) / size)
+	return np.outer(1 - abs(points - center) / width, 1 - abs(points - center) / width)
 
-a = create_upsampling_weights(2)
-print a
+def create_initial_bilinear_weights(size):
+	W = np.zeros([size, size, 21, 21])
+	bilinear_filt = bilinear_filter(size)
+
+	for i in range(21):
+		W[:,:,i,i] = bilinear_filt
+
+	return W

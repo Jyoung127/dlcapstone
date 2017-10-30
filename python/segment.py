@@ -2,16 +2,15 @@ import os
 import argparse
 import bilinear_upsampling_weights as bilinear
 import color_label_map as clm
-import matplotlib.image as mpimg
 import numpy as np
 import tensorflow as tf
 import random
 import cv2
 from collections import deque
 from functools import partial
-from PIL import Image
 
 BATCH_SIZE = 20
+LEARNING_RATE = 0.0001
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
@@ -146,8 +145,8 @@ def main(voc_devkit_path, index_file):
 	drop7 = tf.nn.dropout(relu7, keep_prob)
 
 	# Calculate 32x downsampled predictions
-	downsampled_32x_W = tf.Variable(tf.truncated_normal([1, 1, FULLY_CONV_DEPTH, 21], stddev=0.1))
-	downsampled_32x_b = tf.Variable(tf.truncated_normal([21], stddev=0.1))
+	downsampled_32x_W = tf.Variable(tf.zeros([1, 1, FULLY_CONV_DEPTH, 21]))
+	downsampled_32x_b = tf.Variable(tf.zeros([21]))
 
 	downsampled_32x = tf.nn.conv2d(drop7, downsampled_32x_W, [1, 1, 1, 1], "SAME") + downsampled_32x_b
 
@@ -162,7 +161,7 @@ def main(voc_devkit_path, index_file):
 	ground_truth_without_void = tf.multiply(ground_truth, void_pixel_mask)
 
 	loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=upsampled_output, labels=ground_truth_without_void))
-	train = tf.train.MomentumOptimizer(0.0001, 0.9).minimize(loss)
+	train = tf.train.MomentumOptimizer(LEARNING_RATE, 0.9).minimize(loss)
 
 	predictions = tf.argmax(upsampled_output, axis=3)
 	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=void_pixel_mask)

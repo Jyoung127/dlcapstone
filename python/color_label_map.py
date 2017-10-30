@@ -26,7 +26,7 @@ def create_color_label_map():
 		color_to_label[(r, g, b)] = i
 
 	label_to_color[MANUAL_VOID_LABEL] = MANUAL_VOID_RGB
-	label_to_color[MANUAL_VOID_RGB] = MANUAL_VOID_LABEL
+	color_to_label[MANUAL_VOID_RGB] = MANUAL_VOID_LABEL
 	return label_to_color, color_to_label
 
 def label_image_to_rgb(image, label_to_color_map):

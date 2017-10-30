@@ -11,7 +11,7 @@ from collections import deque
 from functools import partial
 from PIL import Image
 
-BATCH_SIZE = 10
+BATCH_SIZE = 20
 NUM_CHANNELS = 3
 FULLY_CONV_DEPTH = 1024 # Or is it???
 
@@ -190,7 +190,7 @@ def main(voc_devkit_path, index_file):
 		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
 
 		label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
-		width, height, channels = input_batch[0].shape
+		height, width, channels = input_batch[0].shape
 
  		_, l = sess.run([train, loss], feed_dict={images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5})
  		print l

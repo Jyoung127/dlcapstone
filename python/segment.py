@@ -158,13 +158,15 @@ def main(voc_devkit_path, index_file):
 
 	# Loss and mean_iou calculation
 	void_pixel_mask = tf.cast(tf.not_equal(ground_truth, 255), tf.int32)
-	ground_truth_without_void = tf.multiply(ground_truth, void_pixel_mask)
+	border_pixel_mask = tf.cast(tf.not_equal(ground_truth, clm.MANUAL_VOID_LABEL), tf.int32)
+	full_mask = tf.multiply(void_pixel_mask, border_pixel_mask)
+	ground_truth_without_void = tf.multiply(ground_truth, full_mask)
 
 	loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=upsampled_output, labels=ground_truth_without_void))
 	train = tf.train.MomentumOptimizer(LEARNING_RATE, 0.9).minimize(loss)
 
 	predictions = tf.argmax(upsampled_output, axis=3)
-	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=void_pixel_mask)
+	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=full_mask)
 
 	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())

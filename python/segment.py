@@ -21,7 +21,7 @@ INPUT_IMAGES_DIR_REL = 'VOC2012/JPEGImages'
 LABEL_IMAGES_DIR_REL = 'VOC2012/SegmentationClass'
 
 
-def main(voc_devkit_path, index_file):
+def main(voc_devkit_path, index_file, weights_file):
 	image_width = tf.placeholder(tf.int32)
 	image_height = tf.placeholder(tf.int32)
 	images = tf.placeholder(tf.float32, [BATCH_SIZE, None, None, NUM_CHANNELS])
@@ -169,6 +169,12 @@ def main(voc_devkit_path, index_file):
 	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=full_mask)
 
 	sess = tf.Session()
+	#first time only then can remove
+	#saver=tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=1)
+
+	#not first time but every other time
+	#saver = tf.train.import_meta_graph('weights.meta')
+	#saver.restore(sess, tf.train.latest_checkpoint('./'))
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
 
@@ -193,7 +199,17 @@ def main(voc_devkit_path, index_file):
 		label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
 		height, width, channels = input_batch[0].shape
 
+
+		#first time only, append below to feed_dict
+		# npz = np.load(weights_file)
+		# param_dict = {}
+		# for val in sorted(npz.items()):
+		# 	val[0][:4] is 'conv':
+		# 		param_dict[val[0]] = val[1]
+
  		_, l = sess.run([train, loss], feed_dict={images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5})
+ 		#every time
+ 		#saver.save(sess, './weights')
  		print l
 
  	# Testing testing
@@ -232,5 +248,6 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('voc_devkit_path', help='Path to VOCdevkit directory')
 	parser.add_argument('index_file', help='Path to images index file (likely data/images_index.txt)')
+	parser.add_argument('weights_file', help='Path to images weights file (likely python/vgg16_weights.npz)')
 	args = parser.parse_args()
-	main(args.voc_devkit_path, args.index_file)
+	main(args.voc_devkit_path, args.index_file, args.weights_file)

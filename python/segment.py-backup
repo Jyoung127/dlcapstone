@@ -29,14 +29,14 @@ def main(voc_devkit_path, index_file, weights_file):
 	keep_prob = tf.placeholder(tf.float32)
 
 	# Layer 1
-	conv1_1_W = tf.Variable(tf.truncated_normal([3, 3, 3, 64], stddev=0.1))
-	conv1_1_b = tf.Variable(tf.truncated_normal([64], stddev=0.1))
+	conv1_1_W = tf.placeholder(tf.float32, [3, 3, 3, 64])
+	conv1_1_b = tf.placeholder(tf.float32, [64])
 	conv1_1 = tf.nn.conv2d(images, conv1_1_W, [1, 1, 1, 1], "SAME") + conv1_1_b
 
 	relu1_1 = tf.nn.relu(conv1_1)
 
-	conv1_2_W = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.1))
-	conv1_2_b = tf.Variable(tf.truncated_normal([64], stddev=0.1))
+	conv1_2_W = tf.placeholder(tf.float32, [3, 3, 64, 64])
+	conv1_2_b = tf.placeholder(tf.float32, [64])
 	conv1_2 = tf.nn.conv2d(relu1_1, conv1_2_W, [1, 1, 1, 1], "SAME") + conv1_2_b
 
 	relu1_2 = tf.nn.relu(conv1_2)
@@ -45,14 +45,14 @@ def main(voc_devkit_path, index_file, weights_file):
 	pool1 = tf.nn.max_pool(relu1_2, [1, 2, 2, 1], [1, 2, 2, 1], "SAME")
 
 	# Layer 2
-	conv2_1_W = tf.Variable(tf.truncated_normal([3, 3, 64, 128], stddev=0.1))
-	conv2_1_b = tf.Variable(tf.truncated_normal([128], stddev=0.1))
+	conv2_1_W = tf.placeholder(tf.float32, [3, 3, 64, 128])
+	conv2_1_b = tf.placeholder(tf.float32, [128])
 	conv2_1 = tf.nn.conv2d(pool1, conv2_1_W, [1, 1, 1, 1], "SAME") + conv2_1_b
 
 	relu2_1 = tf.nn.relu(conv2_1)
 
-	conv2_2_W = tf.Variable(tf.truncated_normal([3, 3, 128, 128], stddev=0.1))
-	conv2_2_b = tf.Variable(tf.truncated_normal([128], stddev=0.1))
+	conv2_2_W = tf.placeholder(tf.float32, [3, 3, 128, 128])
+	conv2_2_b = tf.placeholder(tf.float32, [128])
 	conv2_2 = tf.nn.conv2d(relu2_1, conv2_2_W, [1, 1, 1, 1], "SAME") + conv2_2_b
 
 	relu2_2 = tf.nn.relu(conv2_2)
@@ -61,20 +61,20 @@ def main(voc_devkit_path, index_file, weights_file):
 	pool2 = tf.nn.max_pool(relu2_2, [1, 2, 2, 1], [1, 2, 2, 1], "SAME")
 
 	# Layer 3
-	conv3_1_W = tf.Variable(tf.truncated_normal([3, 3, 128, 256], stddev=0.1))
-	conv3_1_b = tf.Variable(tf.truncated_normal([256], stddev=0.1))
+	conv3_1_W = tf.placeholder(tf.float32, [3, 3, 128, 256])
+	conv3_1_b = tf.placeholder(tf.float32, [256])
 	conv3_1 = tf.nn.conv2d(pool2, conv3_1_W, [1, 1, 1, 1], "SAME") + conv3_1_b
 
 	relu3_1 = tf.nn.relu(conv3_1)
 
-	conv3_2_W = tf.Variable(tf.truncated_normal([3, 3, 256, 256], stddev=0.1))
-	conv3_2_b = tf.Variable(tf.truncated_normal([256], stddev=0.1))
+	conv3_2_W = tf.placeholder(tf.float32, [3, 3, 256, 256])
+	conv3_2_b = tf.placeholder(tf.float32, [256])
 	conv3_2 = tf.nn.conv2d(relu3_1, conv3_2_W, [1, 1, 1, 1], "SAME") + conv3_2_b
 
 	relu3_2 = tf.nn.relu(conv3_2)
 
-	conv3_3_W = tf.Variable(tf.truncated_normal([3, 3, 256, 256], stddev=0.1))
-	conv3_3_b = tf.Variable(tf.truncated_normal([256], stddev=0.1))
+	conv3_3_W = tf.placeholder(tf.float32, [3, 3, 256, 256])
+	conv3_3_b = tf.placeholder(tf.float32, [256])
 	conv3_3 = tf.nn.conv2d(relu3_2, conv3_3_W, [1, 1, 1, 1], "SAME") + conv3_3_b
 
 	relu3_3 = tf.nn.relu(conv3_3)
@@ -83,20 +83,20 @@ def main(voc_devkit_path, index_file, weights_file):
 	pool3 = tf.nn.max_pool(relu3_3, [1, 2, 2, 1], [1, 2, 2, 1], "SAME")
 
 	# Layer 4
-	conv4_1_W = tf.Variable(tf.truncated_normal([3, 3, 256, 512], stddev=0.1))
-	conv4_1_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv4_1_W = tf.placeholder(tf.float32, [3, 3, 256, 512])
+	conv4_1_b = tf.placeholder(tf.float32, [512])
 	conv4_1 = tf.nn.conv2d(pool3, conv4_1_W, [1, 1, 1, 1], "SAME") + conv4_1_b
 
 	relu4_1 = tf.nn.relu(conv4_1)
 
-	conv4_2_W = tf.Variable(tf.truncated_normal([3, 3, 512, 512], stddev=0.1))
-	conv4_2_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv4_2_W = tf.placeholder(tf.float32, [3, 3, 512, 512])
+	conv4_2_b = tf.placeholder(tf.float32, [512])
 	conv4_2 = tf.nn.conv2d(relu4_1, conv4_2_W, [1, 1, 1, 1], "SAME") + conv4_2_b
 
 	relu4_2 = tf.nn.relu(conv4_2)
 
-	conv4_3_W = tf.Variable(tf.truncated_normal([3, 3, 512, 512], stddev=0.1))
-	conv4_3_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv4_3_W = tf.placeholder(tf.float32, [3, 3, 512, 512])
+	conv4_3_b = tf.placeholder(tf.float32, [512])
 	conv4_3 = tf.nn.conv2d(relu4_2, conv4_3_W, [1, 1, 1, 1], "SAME") + conv4_3_b
 
 	relu4_3 = tf.nn.relu(conv4_3)
@@ -105,20 +105,20 @@ def main(voc_devkit_path, index_file, weights_file):
 	pool4 = tf.nn.max_pool(relu4_3, [1, 2, 2, 1], [1, 2, 2, 1], "SAME")
 
 	# Layer 5
-	conv5_1_W = tf.Variable(tf.truncated_normal([3, 3, 512, 512], stddev=0.1))
-	conv5_1_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv5_1_W = tf.placeholder(tf.float32, [3, 3, 512, 512])
+	conv5_1_b = tf.placeholder(tf.float32, [512])
 	conv5_1 = tf.nn.conv2d(pool4, conv5_1_W, [1, 1, 1, 1], "SAME") + conv5_1_b
 
 	relu5_1 = tf.nn.relu(conv5_1)
 
-	conv5_2_W = tf.Variable(tf.truncated_normal([3, 3, 512, 512], stddev=0.1))
-	conv5_2_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv5_2_W = tf.placeholder(tf.float32, [3, 3, 512, 512])
+	conv5_2_b = tf.placeholder(tf.float32, [512])
 	conv5_2 = tf.nn.conv2d(relu5_1, conv5_2_W, [1, 1, 1, 1], "SAME") + conv5_2_b
 
 	relu5_2 = tf.nn.relu(conv5_2)
 
-	conv5_3_W = tf.Variable(tf.truncated_normal([3, 3, 512, 512], stddev=0.1))
-	conv5_3_b = tf.Variable(tf.truncated_normal([512], stddev=0.1))
+	conv5_3_W = tf.placeholder(tf.float32, [3, 3, 512, 512])
+	conv5_3_b = tf.placeholder(tf.float32, [512])
 	conv5_3 = tf.nn.conv2d(relu5_2, conv5_3_W, [1, 1, 1, 1], "SAME") + conv5_3_b
 
 	relu5_3 = tf.nn.relu(conv5_3)
@@ -173,8 +173,8 @@ def main(voc_devkit_path, index_file, weights_file):
 	#saver=tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=1)
 
 	#not first time but every other time
-	#saver = tf.train.import_meta_graph('weights.meta')
-	#saver.restore(sess, tf.train.latest_checkpoint('./'))
+	saver = tf.train.import_meta_graph('weights.meta')
+	saver.restore(sess, tf.train.latest_checkpoint('./'))
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
 
@@ -200,16 +200,43 @@ def main(voc_devkit_path, index_file, weights_file):
 		height, width, channels = input_batch[0].shape
 
 
+		feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5}
+
 		#first time only, append below to feed_dict
 		# npz = np.load(weights_file)
-		# param_dict = {}
+		# feed_dict[conv1_1_W] = npz['conv1_1_W']
+		# feed_dict[conv1_1_b] = npz['conv1_1_b']
+		# feed_dict[conv1_2_W] = npz['conv1_2_W']
+		# feed_dict[conv1_2_b] = npz['conv1_2_b']
+		# feed_dict[conv2_1_W] = npz['conv2_1_W']
+		# feed_dict[conv2_1_b] = npz['conv2_1_b']
+		# feed_dict[conv2_2_W] = npz['conv2_2_W']
+		# feed_dict[conv2_2_b] = npz['conv2_2_b']
+		# feed_dict[conv3_1_W] = npz['conv3_1_W']
+		# feed_dict[conv3_1_b] = npz['conv3_1_b']
+		# feed_dict[conv3_2_W] = npz['conv3_2_W']
+		# feed_dict[conv3_2_b] = npz['conv3_2_b']
+		# feed_dict[conv3_3_W] = npz['conv3_3_W']
+		# feed_dict[conv3_3_b] = npz['conv3_3_b']
+		# feed_dict[conv4_1_W] = npz['conv4_1_W']
+		# feed_dict[conv4_1_b] = npz['conv4_1_b']
+		# feed_dict[conv4_2_W] = npz['conv4_2_W']
+		# feed_dict[conv4_2_b] = npz['conv4_2_b']
+		# feed_dict[conv4_3_W] = npz['conv4_3_W']
+		# feed_dict[conv4_3_b] = npz['conv4_3_b']
+		# feed_dict[conv5_1_W] = npz['conv5_1_W']
+		# feed_dict[conv5_1_b] = npz['conv5_1_b']
+		# feed_dict[conv5_2_W] = npz['conv5_2_W']
+		# feed_dict[conv5_2_b] = npz['conv5_2_b']
+		# feed_dict[conv5_3_W] = npz['conv5_3_W']
+		# feed_dict[conv5_3_b] = npz['conv5_3_b']
 		# for val in sorted(npz.items()):
-		# 	val[0][:4] is 'conv':
-		# 		param_dict[val[0]] = val[1]
+		# 	if val[0][:4] == 'conv':
+		# 		feed_dict[str(val[0])] = val[1]
 
- 		_, l = sess.run([train, loss], feed_dict={images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5})
+ 		_, l = sess.run([train, loss], feed_dict)
  		#every time
- 		#saver.save(sess, './weights')
+ 		saver.save(sess, './weights')
  		print l
 
  	# Testing testing

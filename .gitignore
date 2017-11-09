@@ -1,2 +1,5 @@
 VOCdevkit
 *.pyc
+vgg16_weights.npz
+initial_model
+saved_weights

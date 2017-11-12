@@ -60,7 +60,7 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
  		for j in range(BATCH_SIZE):
  			predicted_image = prediction_images[j]
  			image_filename = '{0}.png'.format(name_batch[j])
- 			cv2.imwrite(image_filename, predicted_image)
+ 			cv2.imwrite(image_filename, cv2.cvtColor(np.uint8(predicted_image), cv2.COLOR_RGB2BGR))
 
  		# print 'mean iou is', miou
 

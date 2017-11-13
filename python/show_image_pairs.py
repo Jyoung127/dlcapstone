@@ -6,6 +6,11 @@ import sys
 from constants import *
 
 def main(voc_devkit_path, image_paths):
+	print 'Commands (when image window is selected):'
+	print '    n: next image'
+	print '    b: previous image'
+	print '    q: quit'
+
 	original_images_dir = '{0}/{1}'.format(voc_devkit_path, INPUT_IMAGES_DIR_REL)
 	ground_truth_dir = '{0}/{1}'.format(voc_devkit_path, LABEL_IMAGES_DIR_REL)
 
@@ -13,7 +18,10 @@ def main(voc_devkit_path, image_paths):
 	cv2.namedWindow('ground_truth_window')
 	cv2.namedWindow('image_window')
 
-	for image_path in image_paths:
+	current_idx = 0
+
+	while True:
+		image_path = image_paths[current_idx]
 		image_file = os.path.basename(image_path)
 
 		original_image_path = '{0}/{1}.jpg'.format(original_images_dir, image_file[:-4])
@@ -27,7 +35,13 @@ def main(voc_devkit_path, image_paths):
 		cv2.imshow('ground_truth_window', np.uint8(ground_truth))
 		cv2.imshow('image_window', np.uint8(image))
 
-		cv2.waitKey()
+		key = cv2.waitKey()
+		if key == ord('n'):
+			current_idx = min(current_idx + 1, len(image_paths) - 1)
+		elif key == ord('b'):
+			current_idx = max(current_idx - 1 , 0)
+		elif key == ord('q'):
+			break
 
 
 if __name__ == '__main__':

@@ -152,7 +152,8 @@ def main(weights_file):
 	train = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss, name='train')
 
 	predictions = tf.argmax(upsampled_32x_output, axis=3, name='predictions')
-	mean_iou, _ = tf.metrics.mean_iou(ground_truth, predictions, 21, weights=full_mask)
+	masked_ground_truth = tf.multiply(ground_truth, full_mask)
+	mean_iou, _ = tf.metrics.mean_iou(masked_ground_truth, predictions, 21, weights=full_mask)
 
 	sess = tf.Session()
 
@@ -160,7 +161,7 @@ def main(weights_file):
 	sess.run(tf.local_variables_initializer())
 
 	saver = tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=1)
-	saver.save(sess, 'initial_model/initial_32x_model')
+	saver.save(sess, 'initial_model/initial_32x_model-new')
 
 
 if __name__ == '__main__':

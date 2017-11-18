@@ -17,6 +17,8 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
 	saver = tf.train.import_meta_graph(meta_file)
 	saver.restore(sess, saved_weights)
 
+	sess.run(tf.local_variables_initializer())
+
 	# Pull tensors from saved file
 	graph = tf.get_default_graph()
 
@@ -26,8 +28,10 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
 	ground_truth = graph.get_tensor_by_name("ground_truth:0")
 	keep_prob = graph.get_tensor_by_name("keep_prob:0")
 	predictions = graph.get_tensor_by_name("predictions:0")
+	full_mask = graph.get_tensor_by_name("full_mask:0")
 	mean_iou = graph.get_tensor_by_name("mean_iou/mean_iou:0")
 	loss = graph.get_tensor_by_name("loss:0")
+	update_op = graph.get_operation_by_name("mean_iou/AssignAdd")
 	train = graph.get_operation_by_name("train")
 
 	label_to_color, color_to_label = clm.create_color_label_map()
@@ -52,8 +56,8 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
 
 		feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5}
 
- 		# preds, miou = sess.run([predictions, mean_iou], feed_dict)
- 		preds = sess.run(predictions, feed_dict)
+ 		preds, up_op = sess.run([predictions, update_op], feed_dict)
+ 		miou = sess.run(mean_iou)
 
  		prediction_images = map(lambda pred_img: clm.label_image_to_rgb(pred_img, label_to_color), preds)
 
@@ -62,7 +66,7 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
  			image_filename = '{0}.png'.format(name_batch[j])
  			cv2.imwrite(image_filename, cv2.cvtColor(np.uint8(predicted_image), cv2.COLOR_RGB2BGR))
 
- 		# print 'mean iou is', miou
+ 		print 'mean iou is', miou
 
 
 if __name__ == '__main__':

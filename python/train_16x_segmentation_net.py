@@ -11,13 +11,13 @@ from functools import partial
 from constants import *
 from train_32x_segmentation_net import pad_img, read_img_rgb, pad_batch
 
-def main(voc_devkit_path, index_file, meta_file, saved_weights):
+def main(voc_devkit_path, index_file, meta_file, saved_weights_dir):
 	# Restore old session from saved file
 	sess = tf.Session()
 	saver = tf.train.import_meta_graph(meta_file)
-	saver.restore(sess, saved_weights)
-
-	sess.run(tf.local_variables_initializer())
+	# On first iteration be sure to load from to the initial model weights,
+	# but still save to another set of weights to avoid overwriting them!
+	saver.restore(sess, tf.train.latest_checkpoint(saved_weights_dir))
 
 	# Pull tensors from saved file
 	graph = tf.get_default_graph()
@@ -28,10 +28,8 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
 	ground_truth = graph.get_tensor_by_name("ground_truth:0")
 	keep_prob = graph.get_tensor_by_name("keep_prob:0")
 	predictions = graph.get_tensor_by_name("predictions:0")
-	full_mask = graph.get_tensor_by_name("full_mask:0")
 	mean_iou = graph.get_tensor_by_name("mean_iou/mean_iou:0")
 	loss = graph.get_tensor_by_name("loss:0")
-	update_op = graph.get_operation_by_name("mean_iou/AssignAdd")
 	train = graph.get_operation_by_name("train")
 
 	label_to_color, color_to_label = clm.create_color_label_map()
@@ -46,34 +44,26 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights):
 		sorted_img_names = [line[:-1] for line in f]
 	num_imgs = len(sorted_img_names)
 
-	for i in range(1):
- 		r = random.randint(0, num_imgs - BATCH_SIZE)
- 		name_batch = sorted_img_names[r : r + BATCH_SIZE]
-		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
+	for j in range(1, 101):
+		for i in range(NUM_BATCHES):
+			r = random.randint(0, num_imgs - BATCH_SIZE)
+			name_batch = sorted_img_names[r : r + BATCH_SIZE]
+			input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
 
-		label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
-		height, width, channels = input_batch[0].shape
+			label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
+			height, width, channels = input_batch[0].shape
 
-		feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 1.0}
+			feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5}
 
- 		preds, up_op = sess.run([predictions, update_op], feed_dict)
- 		miou = sess.run(mean_iou)
-
- 		prediction_images = map(lambda pred_img: clm.label_image_to_rgb(pred_img, label_to_color), preds)
-
- 		for j in range(BATCH_SIZE):
- 			predicted_image = prediction_images[j]
- 			image_filename = '{0}.png'.format(name_batch[j])
- 			cv2.imwrite(image_filename, cv2.cvtColor(np.uint8(predicted_image), cv2.COLOR_RGB2BGR))
-
- 		print 'mean iou is', miou
-
+			_, l = sess.run([train, loss], feed_dict)
+			print 'loss for batch', i, 'in epoch', j, 'is', l
+		saver.save(sess, saved_weights_dir + '/saved_16x_weights_epoch_' + str(j), global_step=j)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('voc_devkit_path', help='Path to VOCdevkit directory')
 	parser.add_argument('index_file', help='Path to images index file (likely data/images_index.txt)')
-	parser.add_argument('meta_file', help='Path to the meta file (likely initial_model/initial_32x_model.meta')
-	parser.add_argument('saved_weights', help='Path to saved weights directory (e.g. saved_weights/saved_32x_weights-9)')
+	parser.add_argument('meta_file', help='Path to the meta file (likely initial_model/initial_16x_model.meta')
+	parser.add_argument('saved_weights_dir', help='Path to saved weights directory (likely saved_weights)')
 	args = parser.parse_args()
-	main(args.voc_devkit_path, args.index_file, args.meta_file, args.saved_weights)
+	main(args.voc_devkit_path, args.index_file, args.meta_file, args.saved_weights_dir)

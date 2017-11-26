@@ -43,19 +43,20 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights_dir):
 		sorted_img_names = [line[:-1] for line in f]
 	num_imgs = len(sorted_img_names)
 
-	for i in range(NUM_BATCHES):
- 		r = random.randint(0, num_imgs - BATCH_SIZE)
- 		name_batch = sorted_img_names[r : r + BATCH_SIZE]
-		input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
+	for j in range(48, 101):
+		for i in range(NUM_BATCHES):
+			r = random.randint(0, num_imgs - BATCH_SIZE)
+			name_batch = sorted_img_names[r : r + BATCH_SIZE]
+			input_batch, label_batch = pad_batch(name_batch, input_images_dir, label_images_dir)
 
-		label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
-		height, width, channels = input_batch[0].shape
+			label_batch = map(lambda label_img: clm.rgb_image_to_label(np.array(label_img, dtype='uint8'), color_to_label), label_batch)
+			height, width, channels = input_batch[0].shape
 
-		feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5}
+			feed_dict = {images: input_batch, ground_truth: label_batch, image_width: width, image_height: height, keep_prob: 0.5}
 
- 		_, l = sess.run([train, loss], feed_dict)
- 		saver.save(sess, saved_weights_dir + '/saved_32x_weights', global_step=i)
- 		print 'loss for batch', i, 'is', l
+			_, l = sess.run([train, loss], feed_dict)
+			print 'loss for batch', i, 'in epoch', j, 'is', l
+		saver.save(sess, saved_weights_dir + '/saved_32x_weights_epoch_' + str(j), global_step=j)
 
 def pad_img(H, W, border_type, img):
 	h = img.shape[0]

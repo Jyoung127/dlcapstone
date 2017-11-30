@@ -3,3 +3,9 @@ VOCdevkit
 vgg16_weights.npz
 initial_model
 saved_weights
+aws
+data/VOCtest
+data/weights
+results
+results.tar.gz
+data/vgg16_weights.npz

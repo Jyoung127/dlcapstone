@@ -11,7 +11,7 @@ from functools import partial
 from constants import *
 from train_32x_segmentation_net import pad_img, read_img_rgb
 
-def main(voc_devkit_path, index_file, meta_file, saved_weights, results_path):
+def main(voc_test_path, index_file, meta_file, saved_weights, results_path):
 	# Restore old session from saved file
 	sess = tf.Session()
 	saver = tf.train.import_meta_graph(meta_file)
@@ -37,9 +37,9 @@ def main(voc_devkit_path, index_file, meta_file, saved_weights, results_path):
 	label_to_color, color_to_label = clm.create_color_label_map()
 
 	# Training training	
-	all_images_file = '{0}/{1}'.format(voc_devkit_path, ALL_IMAGES_FILE_REL)
-	input_images_dir = '{0}/{1}'.format(voc_devkit_path, INPUT_IMAGES_DIR_REL)
-	label_images_dir = '{0}/{1}'.format(voc_devkit_path, LABEL_IMAGES_DIR_REL)
+	all_images_file = '{0}/{1}'.format(voc_test_path, ALL_IMAGES_FILE_REL)
+	input_images_dir = '{0}/{1}'.format(voc_test_path, INPUT_IMAGES_DIR_REL)
+	label_images_dir = '{0}/{1}'.format(voc_test_path, LABEL_IMAGES_DIR_REL)
 	results_dir = '{0}/{1}'.format(results_path, VOC_COMP_DIR_REL)
 
 	sorted_img_names = []
@@ -105,10 +105,10 @@ def pad_batch(name_batch, input_images_dir):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('voc_devkit_path', help='Path to VOCdevkit directory')
+	parser.add_argument('voc_test_path', help='Path to VOCdevkit directory')
 	parser.add_argument('index_file', help='Path to images index file (likely data/test_images_index.txt)')
 	parser.add_argument('meta_file', help='Path to the meta file (likely initial_model/initial_32x_model.meta')
 	parser.add_argument('saved_weights', help='Path to saved weights directory (e.g. saved_weights/saved_32x_weights-9)')
 	parser.add_argument('results_path', help='Path to results directory (likely ./results)')
 	args = parser.parse_args()
-	main(args.voc_devkit_path, args.index_file, args.meta_file, args.saved_weights, args.results_path)
+	main(args.voc_test_path, args.index_file, args.meta_file, args.saved_weights, args.results_path)

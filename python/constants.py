@@ -8,5 +8,7 @@ NUM_BATCHES = NUM_TEST_IMAGES / BATCH_SIZE
 MANUAL_VOID_RGB = [1, 1, 1]
 
 ALL_IMAGES_FILE_REL = 'VOC2012/ImageSets/Segmentation/trainval.txt'
+ALL_TEST_IMAGES_FILE_REL = 'VOC2012/ImageSets/Segmentation/test.txt'
 INPUT_IMAGES_DIR_REL = 'VOC2012/JPEGImages'
 LABEL_IMAGES_DIR_REL = 'VOC2012/SegmentationClass'
+RESULTS_IMAGES_DIR_REL = 'VOC2012/Segmentation/comp6_test_cls'
